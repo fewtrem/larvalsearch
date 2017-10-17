@@ -51,6 +51,7 @@ class matchUp150:
         self.infoC = {}
         self.pointsC = {}
         self.nBlastC = {}
+        self.maxNo = {}
         for thisType in [BRAIN,VNC]:
             with open(self.inputLocPre+"Prod_NBlast_"+thisType.replace("*","")+"_Info.pkl") as fI:
                 self.infoC[thisType] = pickle.load(fI)
