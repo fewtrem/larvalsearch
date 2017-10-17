@@ -56,6 +56,7 @@ class matchUp150:
                 self.infoC[thisType] = pickle.load(fI)
             self.pointsC[thisType] = nrrd2.read(self.inputLocPre+"Prod_NBlast_"+thisType.replace("*","")+"_Loc.pkl")[0]
             self.nBlastC[thisType] = nrrd2.read(self.inputLocPre+"Prod_NBlast_"+thisType.replace("*","")+"_NBlast.pkl")[0]
+            self.maxNo[thisType] = np.sum(self.pointsC[thisType][:,:,1]<10000,axis=1)
         # create the reverse look-up
         self.reverseLU = {BRAIN:{},VNC:{}}
         for thisType in [BRAIN,VNC]:
@@ -76,23 +77,25 @@ class matchUp150:
             revID = -1
         return revID
     def findSimilar(self,thisOne,simList):
-        iKey = self.doRevLU(thisOne,thisOne[STACKTYPE])
+        thisType = thisOne[STACKTYPE]
+        iKey = self.doRevLU(thisOne,thisType)
         resultsList = []
         skipped = 0
         if iKey>=0:
-            testC1 = np.copy(self.pointsC[thisOne[STACKTYPE]][iKey])
-            compDataA = self.nBlastC[thisOne[STACKTYPE]][iKey]
+            testC1 = np.copy(self.pointsC[thisType][iKey])
+            compDataA = self.nBlastC[thisType][iKey]
             # reset this value's 1000s to something else so they don't equate!
             testC1[testC1==10000]=30000
             for j in range(len(simList)):
                 jI = simList[j][1]
-                jKey = self.doRevLU(jI,thisOne[STACKTYPE])
+                jKey = self.doRevLU(jI,thisType)
                 if jKey>=0:
-                    testC2 = self.pointsC[thisOne[STACKTYPE]][jKey]
-                    compDataB = self.nBlastC[thisOne[STACKTYPE]][jKey]
-                    compResAB = np.sum(cGetNBlastScore(testC1,testC2,compDataA,compDataB)[:,2:4],axis=0)
-                    compResBA = np.sum(cGetNBlastScore(testC2,testC1,compDataB,compDataA)[:,2:4],axis=0)
-                    resultsList.append([simList[j][1],simList[j][0],compResAB[0],compResAB[1],compResBA[0],compResBA[1]])
+                    if self.maxNo[thisType][iKey]>0 and self.maxNo[thisType][jKey]>0:
+                        testC2 = self.pointsC[thisType][jKey]
+                        compDataB = self.nBlastC[thisType][jKey]
+                        compResAB = np.sum(cGetNBlastScore(testC1,testC2,compDataA,compDataB)[:self.maxNo[thisType][iKey],2:4],axis=0)
+                        compResBA = np.sum(cGetNBlastScore(testC2,testC1,compDataB,compDataA)[:self.maxNo[thisType][jKey],2:4],axis=0)
+                        resultsList.append([simList[j][1],simList[j][0],compResAB[0],compResAB[1],compResBA[0],compResBA[1]])
                 else:
                     skipped+=1
         else:
