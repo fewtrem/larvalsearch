@@ -94,14 +94,14 @@ def fetchImage(imgID):
         # Now show each neuron as a row entry:
         for thisChan in scoreInfo:
             for thisLab in scoreInfo[thisChan]:
-                html+="<TR><TD>"+chanDict[thisChan]+"</TD><TD>"+str(thisLab)+"</TD><TD>"+'{0:.3f}'.format(scoreInfo[thisChan][thisLab]['singleScore'])+"</TD><TD><IMG src='../getProj?id="+stackID+"&chan="+thisChan+"&flip=&lab="+str(thisLab)+"' height='20%'></TD><TD><a href='../searchSim?id="+stackID+"&chan="+thisChan+"&lab="+str(thisLab)+"&flip='>Original</a>  <a href='../searchSim?id="+stackID+"&chan="+thisChan+"&lab="+str(thisLab)+"&flip=F'>Flip</a></TD></TR>"
+                html+="<TR><TD>"+chanDict[thisChan]+"</TD><TD>"+str(thisLab)+"</TD><TD>"+'{0:.3f}'.format(scoreInfo[thisChan][thisLab]['singleScore'])+"</TD><TD><IMG src='../getProj?id="+stackID+"&chan="+thisChan+"&flip=&lab="+str(thisLab)+"' height='20%'></TD><TD><a href='../webFindSim?id="+stackID+"&chan="+thisChan+"&lab="+str(thisLab)+"&flip='>Original</a>  <a href='../webFindSim?id="+stackID+"&chan="+thisChan+"&lab="+str(thisLab)+"&flip=F'>Flip</a></TD></TR>"
         html+="</TABLE>"
     else:
         html+="Not found:<BR>"+imgID
     return html
 
 
-@app.route('/searchSim')
+@app.route('/webFindSim')
 def searchSim():
     thisID = request.args.get('id')
     thisChan = request.args.get('chan')
