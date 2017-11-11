@@ -8,9 +8,8 @@ from smootheComp import smootheComp
 from skel150 import matchUp150
 
 # Constants:
-from constants import STACKTYPE,ID,CHAN,BRAIN,VNC,FLIP,LAB
-chanDict = {'R':'Red','G':'Green'}
-flipDict = {'F':'Fliped','':'Original'}
+from constants import STACKTYPE,ID,CHAN,BRAIN,VNC,FLIP,LAB,replacer,chanDict,flipDict
+
 
 # App config:
 app = Flask(__name__)
@@ -18,6 +17,7 @@ app.config['BASIC_AUTH_USERNAME'] = 'vfb'
 app.config['BASIC_AUTH_PASSWORD'] = 'toronto'
 app.config['BASIC_AUTH_FORCE'] = True
 basic_auth = BasicAuth(app)
+app.secret_key = 'well it is in github so'
 
 # Directories:
 # "/media/s1144899/My Passport/QuickCondense/All_May2017_"
@@ -48,9 +48,6 @@ mU150 = matchUp150(matchUp150Path)
 
 
 
-# Helper function to replace generic paths with labels etc.:
-def replacer(sIn,thisID,thisChan,thisFlip,thisLab):
-    return sIn.replace(ID,thisID).replace(FLIP,thisFlip).replace(CHAN,thisChan).replace(LAB,thisLab)
 
 # Request Tiff FileName:
 # decorate our method index with the route method, param "/":
@@ -61,7 +58,7 @@ def index():
     html+="<form action='.' method='POST'>"
     html+="<input type='text' name='tiffName'>"
     html+="<input type='submit' value='go'>"
-    html+="</form>"
+    html+="</form><BR><BR>Try the <a href=\"/em2lm\">EM to LM search tool (BETA)</a>"
     html+="</body>"
     return html
 
@@ -207,5 +204,20 @@ def get_tasks():
     else:
         return json.dumps({'success':False,
                         'error':'Could not find stack'})
+        
+# Add a CSV uploader:        
+from EMtoLM import uploadCSV
+@app.route('/em2lm')
+def uploadCSVAdd():
+    print "EM2LM loading"
+    return uploadCSV()
+
+# Add a CSV viewer:
+from EMtoLM import readCSV
+@app.route('/em2lmView',methods=['POST'])
+def readCSVAdd():
+    return readCSV(mU150,metaData,pathToScoreFile)
+
 if __name__ == '__main__':
+#    app.config['SESSION_TYPE'] = 'filesystem'
     app.run(debug=True,host='0.0.0.0', port=80)

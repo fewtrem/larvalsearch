@@ -33,3 +33,9 @@ PATHSHACHIKO = {REF:RESPATH+ID+"/Reformat"+FLIP+CHAN+".nrrd",
                 SKELREP:RESPATH+ID+"/skelRepPruneTubed/prunedSave_"+ID+"_"+FLIP+"_"+CHAN+"_"+LAB+".pkl",
                 SCORES:RESPATH+ID+"/Scores_.pkl",
                 PROJ:RESPATH+ID+"/Projections/"+ID+"_"+CHAN+"_"+FLIP+"_"+LAB+".png"}
+
+# Helper function to replace generic paths with labels etc.:
+def replacer(sIn,thisID,thisChan,thisFlip,thisLab):
+    return sIn.replace(ID,thisID).replace(FLIP,thisFlip).replace(CHAN,thisChan).replace(LAB,thisLab)
+chanDict = {'R':'Red','G':'Green'}
+flipDict = {'F':'Fliped','':'Original'}
