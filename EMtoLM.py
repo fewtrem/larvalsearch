@@ -62,10 +62,10 @@ def viewList(mU150,simList,metaData,pathToScoreFile):
     thisType = BRAIN
     html = ""
     if len(simList)>0:
-        html+= "<TABLE><TR><TD>Channel</TD><TD>Flipped Or Not</TD><TD>Matching Score</TD><TD>Alignment Score</TD><TD>Image</TD><TD>GMR</TD></TR>"   
+        html+= "<TABLE><TR><TD>Channel</TD><TD>Flipped Or Not</TD><TD>Matching Score</TD><TD>Alignment Score</TD><TD>Image</TD><TD>GMR</TD><TD>Stack</TD></TR>"   
         for j in range(300 if 300<len(simList) else len(simList)):
             jKey = simList[j][0]
-            thisScore = simList[j][1]+simList[j][0]
+            thisScore = simList[j][1]+simList[j][2]
             thisInfo = mU150.infoC[thisType][jKey]
             resPath = replacer(pathToScoreFile,thisInfo[0],"","","")
             thisAlScore = ""
@@ -74,7 +74,7 @@ def viewList(mU150,simList,metaData,pathToScoreFile):
                     scoreInfo = pickle.load(fI)
                     if int(thisInfo[3]) in scoreInfo[thisInfo[2]]:
                         thisAlScore = '{0:.3f}'.format(scoreInfo[thisInfo[2]][int(thisInfo[3])]['singleScore']) 
-            html+="<TR><TD>"+chanDict[thisInfo[2]]+"</TD><TD>"+flipDict[thisInfo[1]]+"</TD><TD>"+str(thisScore)+"</TD><TD>"+str(thisAlScore)+"</TD><TD><IMG src='../getProj?id="+thisInfo[0]+"&chan="+thisInfo[2]+"&flip="+thisInfo[1]+"&lab="+str(thisInfo[3])+"' height='20%'></TD><TD>"+metaData[thisInfo[0]]['fileGMRa']+"</TD></TR>"
+            html+="<TR><TD>"+chanDict[thisInfo[2]]+"</TD><TD>"+flipDict[thisInfo[1]]+"</TD><TD>"+str(thisScore)+"</TD><TD>"+str(thisAlScore)+"</TD><TD><IMG src='../getProj?id="+thisInfo[0]+"&chan="+thisInfo[2]+"&flip="+thisInfo[1]+"&lab="+str(thisInfo[3])+"' height='20%'></TD><TD>"+metaData[thisInfo[0]]['fileGMRa']+"</TD><TD>"+metaData[thisInfo[0]]['filePath']+"</TD></TR>"
         html+="</TABLE>"
     return html
 
