@@ -14,16 +14,23 @@ from StringIO import StringIO
 import pandas as pd, numpy as np,pickle,os
 from EMtoLMsearchLM import getAllForOne
 from constants import BRAIN, replacer,chanDict,flipDict
-#"/media/s1144899/My Passport/Lineages/30OCt2017MapEMtoLM.pkl"
-mapDataPath = "30OCt2017MapEMtoLM.pkl"
-
-with open(mapDataPath) as fI:
-    modelsEM2LM = pickle.load(fI)
+curDir = os.path.abspath(os.path.dirname(__file__))
 
 def getDir(a):
     b = np.matrix(a-np.mean(a,axis=0))
     c = b.transpose()*b
     return np.linalg.svd(c)[0][:,0]
+
+from subprocess import Popen, PIPE, STDOUT
+def Res_MLS(nZP):
+    with open(os.path.join(curDir,"MLS","Points_input.pkl"),'w') as fO:
+        pickle.dump(nZP.tolist(),fO)
+    cmd = "jython \""+os.path.join(curDir,"runLandmarkReg.py")+"\""
+    p = Popen(cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT, close_fds=True)
+    print p.stdout.read()
+    with open(os.path.join(curDir,"MLS","ConvertedPoints_output.pkl")) as fI:
+        newLandmarkList = pickle.load(fI)
+    return np.array(newLandmarkList)
 
 def get150Points(indToKeep,thisSP):
     viewOut = np.zeros((977,801,336),dtype=np.int16)
@@ -54,6 +61,11 @@ def uploadCSV():
     bodyHTML +="<form action=\"em2lmView\" method=\"post\" enctype=\"multipart/form-data\">"
     bodyHTML += "<input type=\"file\" name=\"fileToUploadVFB\" id=\"fileToUploadVFB\">"
     bodyHTML += "<BR><input type=\"submit\" value=\"Upload CSV\" name=\"submit\">"
+    bodyHTML += "<BR> <input type=\"radio\" name=\"sortType\" value=\"nBLASTFuncAB\" checked> NBlast AB<br>\
+  <input type=\"radio\" name=\"sortType\" value=\"nBLASTFuncABBA\"> NBlast ABBA<br>\
+  <input type=\"radio\" name=\"sortType\" value=\"pBLASTFuncAB\"> PBlast AB\
+    <br>\
+    <input type=\"radio\" name=\"sortType\" value=\"pBLASTFuncABBA\"> PBlast ABBA<BR>"
     bodyHTML += "</form>"
     thisPage = thisPage.replace(BODY,bodyHTML)
     return thisPage
@@ -62,7 +74,7 @@ def viewList(mU150,simList,metaData,pathToScoreFile):
     thisType = BRAIN
     html = ""
     if len(simList)>0:
-        html+= "<TABLE><TR><TD>Channel</TD><TD>Flipped Or Not</TD><TD>Matching Score</TD><TD>Alignment Score</TD><TD>Image</TD><TD>GMR</TD><TD>Stack</TD></TR>"   
+        html+= "<TABLE><TR><TD>Channel</TD><TD>Flipped Or Not</TD><TD>Matching Score</TD><TD>Alignment Score</TD><TD>Image</TD><TD>GMR</TD><TD>Stack</TD><TD>ID</TD></TR>"   
         for j in range(300 if 300<len(simList) else len(simList)):
             jKey = simList[j][0]
             thisScore = simList[j][1]+simList[j][2]
@@ -74,11 +86,16 @@ def viewList(mU150,simList,metaData,pathToScoreFile):
                     scoreInfo = pickle.load(fI)
                     if int(thisInfo[3]) in scoreInfo[thisInfo[2]]:
                         thisAlScore = '{0:.3f}'.format(scoreInfo[thisInfo[2]][int(thisInfo[3])]['singleScore']) 
-            html+="<TR><TD>"+chanDict[thisInfo[2]]+"</TD><TD>"+flipDict[thisInfo[1]]+"</TD><TD>"+str(thisScore)+"</TD><TD>"+str(thisAlScore)+"</TD><TD><IMG src='../getProj?id="+thisInfo[0]+"&chan="+thisInfo[2]+"&flip="+thisInfo[1]+"&lab="+str(thisInfo[3])+"' height='20%'></TD><TD>"+metaData[thisInfo[0]]['fileGMRa']+"</TD><TD>"+metaData[thisInfo[0]]['filePath']+"</TD></TR>"
+            html+="<TR><TD>"+chanDict[thisInfo[2]]+"</TD><TD>"+flipDict[thisInfo[1]]+"</TD><TD>"+str(thisScore)+"</TD><TD>"+str(thisAlScore)+"</TD><TD><IMG src='../getProj?id="+thisInfo[0]+"&chan="+thisInfo[2]+"&flip="+thisInfo[1]+"&lab="+str(thisInfo[3])+"' height='20%'></TD><TD>"+metaData[thisInfo[0]]['fileGMRa']+"</TD><TD>"+metaData[thisInfo[0]]['filePath']+"</TD><TD>"+str(thisInfo)+"</TD></TR>"
         html+="</TABLE>"
     return html
 
 def readCSV(mU150,metaData,pathToScoreFile):
+    sortDict = {'nBLASTFuncAB':lambda x:x[1],
+    'pBLASTFuncAB':lambda x:x[3],
+    'nBLASTFuncABBA':lambda x:x[1]+x[2],
+    'pBLASTFuncABBA':lambda x:x[3]+x[4]}
+    thisFunc = sortDict[request.form['sortType']]
     thisPage = defaultPage
     thisPage = thisPage.replace(TITLE,"Simple EM CSV Processing")
     fI = request.files['fileToUploadVFB']
@@ -87,6 +104,7 @@ def readCSV(mU150,metaData,pathToScoreFile):
     skeletons.columns = map(lambda x:x.replace(" ",""),skeletons.columns.values)
     neuronIDs = skeletons.skeleton_id.unique()
     divisors = np.array([3.8,3.8,50])
+    subtractors = np.array([0,0,6050])
     skelInfo = []
     skelPoints = []
     skelNBlast = []
@@ -97,13 +115,8 @@ def readCSV(mU150,metaData,pathToScoreFile):
         # Get the positions:
         thisSel = skeletons[skeletons.skeleton_id==thisSkelID]
         thisName = thisSel.neuron.unique()[0]
-        thisPoints = thisSel[['x','y','z']].values
-        thisPoints = thisSel[['x','y','z']].values/divisors
-        thisSkel = []
-        for dd in range(3):
-            thisSkel.append(modelsEM2LM[dd].predict(thisPoints))
-        thisSkel = np.array(thisSkel).transpose()
-        thisSkel = np.array(thisSkel)
+        thisPoints = (thisSel[['x','y','z']].values-subtractors)/divisors
+        thisSkel = Res_MLS(thisPoints)
         # Do the NBlasting:
         nBlastDir = []
         for i in range(thisSkel.shape[0]):
@@ -149,7 +162,7 @@ def readCSV(mU150,metaData,pathToScoreFile):
     # Only the first one!
     thisResList = getAllForOne(mU150,skelPoints150[0],skelNBlast150[0])
     np.random.shuffle(thisResList)
-    thisResList.sort(key=lambda x:x[1]+x[2],reverse=True)
+    thisResList.sort(key=lambda x:thisFunc(x),reverse=True)
     html = "Searching for "+skelInfo[0]
     html += viewList(mU150,thisResList,metaData,pathToScoreFile)
     thisPage = thisPage.replace(BODY,html)

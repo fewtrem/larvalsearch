@@ -7,7 +7,7 @@ from constants import STACKTYPE,ID,CHAN,BRAIN,VNC,FLIP,LAB
 import pickle,nrrd2,numpy as np,ctypes,os
 curDir = os.path.abspath(os.path.dirname(__file__))
 # See "/afs/inf.ed.ac.uk/user/s11/s1144899/PhD/Python Projects/ml2017/compaingResults/CFunc" for c code:
-lib = ctypes.cdll.LoadLibrary(os.path.join(curDir,"compareSkeletonPointsProd.so"))
+lib = ctypes.cdll.LoadLibrary(os.path.join(curDir,"compareSkeletonPointsProd2.so"))
 getNBlastScore = lib.getNBlastScoreProd
 # get the minimum distance for all points in C1 to those C2 lists:
 def cGetNBlastScore(testC1,testC2,compDataA,compDataB):
