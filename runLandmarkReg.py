@@ -13,7 +13,7 @@ java -jar jython.jar "/afs/inf.ed.ac.uk/user/s11/s1144899/PhD/Python Projects/Tr
 import sys,os
 import cPickle as pickle
 curDir = os.path.abspath(os.path.dirname(__file__))
-sys.path.append("/plugin/mpicbg-master/mpicbg/target/mpicbg-1.1.2-SNAPSHOT.jar")
+sys.path.append("/plugin/mpicbg-master/mpicbg/target/mpicLatest.jar")
 from mpicbg.models import Point, PointMatch, AffineModel3D, MovingLeastSquaresTransform
 
 with open(os.path.join(curDir,"MLS","pointsToMatchDec2017EntryPointsB.pkl")) as fI:

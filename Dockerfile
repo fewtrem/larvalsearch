@@ -20,9 +20,10 @@ RUN curl -L "http://search.maven.org/remotecontent?filepath=org/python/jython-in
     rm jython_installer-${JYTHON_VERSION}.jar
 
 RUN mkdir /plugin
+
 RUN wget "https://github.com/axtimwalde/mpicbg/archive/master.zip" -O /plugin/master.zip
 RUN unzip /plugin/master.zip -d /plugin/
-RUN mvn -f /plugin/mpicbg-master/pom.xml
+RUN mvn -f /plugin/mpicbg-master/pom.xml -Djar.finalName=mpicLatest
 
 # Set the working directory to /app
 WORKDIR /app
