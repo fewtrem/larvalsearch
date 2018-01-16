@@ -39,7 +39,10 @@ with open(metaDataPath) as fI:
 reverseLookUpStacks = {}
 for thisKey in metaData:
     thisInfo = metaData[thisKey]
-    reverseLookUpStacks[str(os.path.basename(thisInfo['filePath']).split(".")[0])]=thisKey
+    lookUpCode = str(os.path.basename(thisInfo['filePath']).split(".")[0])
+    if lookUpCode not in reverseLookUpStacks:
+        reverseLookUpStacks[lookUpCode]=[]
+    reverseLookUpStacks[lookUpCode]+=[thisKey]
         
 # Load the comparison function:
 sC = smootheComp(sootheCompDataPath)
@@ -80,19 +83,20 @@ def fetchImage(imgID):
     html="<B>View Image From Tiff File</B><BR>"
     # Get the stack ID from input ID:
     if imgID in reverseLookUpStacks:
-        stackID = reverseLookUpStacks[imgID]
-        mD = metaData[stackID]
-        html+=getInfo(imgID,mD,stackID)
-        html+="<BR><BR>"
-        html+= "<TABLE><TR><TD>Channel</TD><TD>Segment</TD><TD>Score</TD><TD>Image</TD><TD>Look for similarities</TD></TR>"
-        # Get score info:
-        with open(replacer(pathToScoreFile,stackID,"","","")) as fI:
-            scoreInfo = pickle.load(fI)
-        # Now show each neuron as a row entry:
-        for thisChan in scoreInfo:
-            for thisLab in scoreInfo[thisChan]:
-                html+="<TR><TD>"+chanDict[thisChan]+"</TD><TD>"+str(thisLab)+"</TD><TD>"+'{0:.3f}'.format(scoreInfo[thisChan][thisLab]['singleScore'])+"</TD><TD><IMG src='../getProj?id="+stackID+"&chan="+thisChan+"&flip=&lab="+str(thisLab)+"' height='20%'></TD><TD><a href='../webFindSim?id="+stackID+"&chan="+thisChan+"&lab="+str(thisLab)+"&flip='>Original</a>  <a href='../webFindSim?id="+stackID+"&chan="+thisChan+"&lab="+str(thisLab)+"&flip=F'>Flip</a></TD></TR>"
-        html+="</TABLE>"
+        stackIDList = reverseLookUpStacks[imgID]
+        for stackID in stackIDList:
+            mD = metaData[stackID]
+            html+=getInfo(imgID,mD,stackID)
+            html+="<BR><BR>"
+            html+= "<TABLE><TR><TD>Channel</TD><TD>Segment</TD><TD>Score</TD><TD>Image</TD><TD>Look for similarities</TD></TR>"
+            # Get score info:
+            with open(replacer(pathToScoreFile,stackID,"","","")) as fI:
+                scoreInfo = pickle.load(fI)
+            # Now show each neuron as a row entry:
+            for thisChan in scoreInfo:
+                for thisLab in scoreInfo[thisChan]:
+                    html+="<TR><TD>"+chanDict[thisChan]+"</TD><TD>"+str(thisLab)+"</TD><TD>"+'{0:.3f}'.format(scoreInfo[thisChan][thisLab]['singleScore'])+"</TD><TD><IMG src='../getProj?id="+stackID+"&chan="+thisChan+"&flip=&lab="+str(thisLab)+"' height='20%'></TD><TD><a href='../webFindSim?id="+stackID+"&chan="+thisChan+"&lab="+str(thisLab)+"&flip='>Original</a>  <a href='../webFindSim?id="+stackID+"&chan="+thisChan+"&lab="+str(thisLab)+"&flip=F'>Flip</a></TD></TR>"
+            html+="</TABLE>"
     else:
         html+="Not found:<BR>"+imgID
     return html
@@ -205,7 +209,7 @@ def get_tasks():
         return json.dumps({'success':False,
                         'error':'Could not find stack'})
         
-# Add a CSV uploader:        
+# Add a CSV uploader:
 from EMtoLM import uploadCSV
 @app.route('/em2lm')
 def uploadCSVAdd():
